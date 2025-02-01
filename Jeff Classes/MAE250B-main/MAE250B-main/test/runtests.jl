@@ -1,0 +1,38 @@
+using MAE250B
+using Test
+using Literate
+#using JLD # need this to ensure JLD works inside .jl files for Literate use
+#using Plots # prevents annoying messages inside the generated notebooks
+
+outputdir = "../notebook"
+litdir = "./literate"
+
+for (root, dirs, files) in walkdir(litdir)
+    if splitpath(root)[end] == "assets"
+        for file in files
+            cp(joinpath(root, file),joinpath(outputdir,file),force=true)
+        end
+    end
+end
+
+function replace_includes(str)
+
+    included = ["header.jl"]
+
+    # Here the path loads the files from their proper directory,
+    # which may not be the directory of the `examples.jl` file!
+    path = litdir
+
+    for ex in included
+        content = read(joinpath(litdir,ex), String)
+        str = replace(str, "include(\"$(ex)\")" => content)
+    end
+    return str
+end
+
+for (root, dirs, files) in walkdir(litdir)
+    for file in files
+        endswith(file,".jl") && startswith(file,"3.2") && Literate.notebook(joinpath(root, file),outputdir,preprocess = replace_includes)
+        #endswith(file,".jl") && Literate.notebook(joinpath(root, file),outputdir,preprocess = replace_includes)
+    end
+end
